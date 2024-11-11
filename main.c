@@ -1,138 +1,162 @@
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define MAX_USERS 100
+#define MAX_USER 100
 
 typedef struct Message{
-    char content[256];
-    char sender[50];
-    struct Message *next;
-    struct Message *prev;
-} Message;
+char content[256];
+char sender[50];
+struct Message *prev;
+struct Message *next;
+} MESSAGE;
 
 typedef struct Chat{
-    Message *head;
-    Message *tail;
-}Chat;
+struct Message *head;
+struct Message *tail;
+} CHAT;
 
 typedef struct User{
-    char userId[50];
-    char username[50];
-    Chat chatHistory;
-}User;
+char useId[50];
+char usedname[50];
+CHAT *chatHistory;
+} USER;
 
-User *userDirectory[MAX_USERS];
+USER *userDirectory[MAX_USER];
+
+void trimNewline(char *str){
+size_t len = strlen(str);
+if(len > 0 && str[len-1] == '\n'){
+str[len-1] = '\0';
+}
+}
 
 int hashFunction(char *userId){
-    int i, hash=0;
-    for(i=0;userId[i]!='\0';i++){
-        hash=(hash+userId[i])%MAX_USERS;
-    }
-    return hash;
+int hash = 0;
+for(int i = 0; userId[i] != '\0'; i++){
+hash = (hash + userId[i]) % MAX_USER;
+}
+return hash;
 }
 
-void createUser(char *userId,char *username){
-    int index=hashFunction(userId);
-    User *newUser=(User *)malloc(sizeof(User));
-    strcpy(newUser->userId,userId);
-    strcpy(newUser->username,username);
-    newUser->chatHistory.head=newUser->chatHistory.tail=NULL;
-    
-    userDirectory[index]=newUser;
+void createUser(char *userId, char *userName){
+trimNewline(userId);
+int index = hashFunction(userId);
+
+while(userDirectory[index] != NULL){
+index = (index + 1) % MAX_USER;
 }
 
-User *findUser(char *userId){
-    int index=hashFunction(userId);
-    return userDirectory[index];
+USER *newUser = (USER *)malloc(sizeof(USER));
+strcpy(newUser->useId, userId);
+strcpy(newUser->usedname, userName);
+
+newUser->chatHistory = (CHAT *)malloc(sizeof(CHAT));
+newUser->chatHistory->head = NULL;
+newUser->chatHistory->tail = NULL;
+
+userDirectory[index] = newUser;
+printf("User created with userid %s at index %d\n", userId, index);
 }
 
-Message *createMessage(char *content,char *senderId){
-    Message *newMessage=(Message *)malloc(sizeof(Message));
-    strcpy(newMessage->content,content);
-    strcpy(newMessage->sender,senderId);
-    newMessage->next=NULL;
-    newMessage->prev=NULL;
-    return newMessage;
+USER *findUser(char *userId){
+trimNewline(userId);
+int index = hashFunction(userId);
+int orgIndex = index;
+
+while(userDirectory[index] != NULL){
+if(strcmp(userDirectory[index]->useId, userId) == 0){
+return userDirectory[index];
+}
+index = (index + 1) % MAX_USER;
+
+if(index == orgIndex) break;
+}
+return NULL;
 }
 
-void sendMessage(User *user,char *content,char *senderId){
-    Message *newMessage=createMessage(content,senderId);
-    
-    if(user->chatHistory.tail==NULL){
-        user->chatHistory.head=user->chatHistory.tail=newMessage;
-    }
-    else{
-        user->chatHistory.tail->next=newMessage;
-        newMessage->prev=user->chatHistory.tail;
-        user->chatHistory.tail=newMessage;
-    }
+void sendMessage(USER *receiver, const char *messageContent, USER *sender){
+MESSAGE *newMessage = (MESSAGE *)malloc(sizeof(MESSAGE));
+strcpy(newMessage->content, messageContent);
+strcpy(newMessage->sender, sender->usedname);
+newMessage->next = NULL;
+newMessage->prev = receiver->chatHistory->tail;
+
+if(receiver->chatHistory->tail == NULL){
+receiver->chatHistory->head = newMessage;
+receiver->chatHistory->tail = newMessage;
+}
+else{
+receiver->chatHistory->tail->next = newMessage;
+receiver->chatHistory->tail = newMessage;
+}
+printf("\nMessage sent from %s to %s\n", sender->usedname, receiver->usedname);
 }
 
-void listMessages(User *user){
-    Message *current=user->chatHistory.head;
-    
-    if(current==NULL){
-        printf("No messages in the chat.\n");
-        return;
-    }
-    printf("Chat History:\n");
-    while(current!=NULL){
-        printf("%s: %s\n",current->sender,current->content);
-        current=current->next;
-    }
+void listMessages(USER *user){
+printf("Chat history for %s:\n", user->usedname);
+MESSAGE *message = user->chatHistory->head;
+
+while(message != NULL){
+printf("From %s: %s\n", message->sender, message->content);
+message = message->next;
+}
 }
 
-int main() {
-    int i;
-    for(i=0;i<MAX_USERS;i++){
-        userDirectory[i]=NULL;
-    }
-    
-    int choice,numUsers,numMessages;
-    char userId[50],username[50],senderId[50],messageContent[256];
-    
-    printf("Enter number of users to create: ");
-    scanf("%d",&numUsers);
-    
-    for(i=0;i<numUsers;i++){
-        printf("\nEnter User ID: ");
-        scanf("%s",userId);
-        printf("Enter Username: ");
-        scanf("%s",username);
-        createUser(userId,username);
-    }
-    
-    printf("\nEnter number of messages to send: ");
-    scanf("%d",&numMessages);
-    
-    for(i=0;i<numMessages;i++){
-        printf("\nEnter Sender ID: ");
-        scanf("%s",senderId);
-        printf("Enter Message Content: ");
-        getchar();
-        
-        fgets(messageContent,sizeof(messageContent),stdin);
-        messageContent[strcspn(messageContent,"\n")]=0;
-        
-        User *sender=findUser(senderId);
-        if(sender==NULL){
-            printf("User not found.\n");
-            continue;
-        }
-        sendMessage(sender,messageContent,senderId);
-    }
-    printf("\nEnter User ID to display chat history: ");
-    scanf("%s",userId);
-    
-    User *user=findUser(userId);
-    if(user!=NULL){
-        listMessages(user);
-    }
-    else{
-        printf("User not found.\n");
-    }
-   
-    return 0;
+int main(){
+for(int i = 0; i < MAX_USER; i++){
+userDirectory[i] = NULL;
+}
+int numUser, numMessage;
+char userId[50], userName[50], senderId[50], messageContent[256];
+printf("Enter the number of users: ");
+scanf("%d", &numUser);
+
+for(int i = 0; i < numUser; i++){
+printf("\nEnter User ID: ");
+scanf("%s", userId);
+printf("Enter User Name: ");
+scanf("%s", userName);
+createUser(userId, userName);
+}
+
+printf("\nEnter the number of messages to send: ");
+scanf("%d", &numMessage);
+for(int i = 0; i < numMessage; i++){
+
+printf("\nEnter Receiver User ID: ");
+scanf("%s", userId);
+printf("Enter Sender User ID: ");
+scanf("%s", senderId);
+printf("Enter the message content: ");
+getchar();
+fgets(messageContent, sizeof(messageContent), stdin);
+messageContent[strcspn(messageContent, "\n")] = 0;
+
+USER *receiver = findUser(userId);
+USER *sender = findUser(senderId);
+
+if(receiver == NULL){
+printf("\nReceiver Not Found\n");
+continue;
+}
+if(sender == NULL){
+printf("\nSender Not Found\n");
+continue;
+}
+sendMessage(receiver, messageContent, sender);
+
+printf("\nEnter User ID to display chat history: ");
+scanf("%s", userId);
+
+USER *user = findUser(userId);
+
+if(user != NULL){
+listMessages(user);
+}
+else{
+printf("\nUser Not Found\n");
+}
+}
+return 0;
 }
