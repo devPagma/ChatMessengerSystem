@@ -17,7 +17,7 @@ The solution must ensure that each chat, whether personal or group, can store me
 
 ## Methodology
 
-1.Define Entities for Chat System:
+### 1.Define Entities for Chat System:
 
 o User: Represents a unique user in the system, with links to their personal and group chats.
 
@@ -25,7 +25,7 @@ o Message: Contains the message content, timestamp, sender, and relevant metadat
 
 o Chat: Organizes and stores messages for both personal and group chats, ensuring that messages can be accessed and retrieved efficiently.
 
-2.Develop the Chat Messenger System:
+### 2.Develop the Chat Messenger System:
 
 o Methods to send messages: Users can send messages to other users or groups. Each message must be stored in such a way that retrieval is efficient, even for large chat histories.
 
@@ -33,7 +33,7 @@ o Methods to retrieve messages: The system should enable users to quickly retrie
 
 o Methods to list all messages in a conversation: Messages in a chat should be retrievable in order, ensuring that the entire conversation can be displayed as needed.
 
-3.Implement an Efficient Data Structure for Message Management:
+### 3.Implement an Efficient Data Structure for Message Management:
 
 o Message Storage: Each chat maintains a data structure where messages are stored with keys like unique message IDs or timestamps, allowing for fast lookups.
 
